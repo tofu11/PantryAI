@@ -45,7 +45,8 @@ export default function Home() {
   const addItem = async (item) => {
     if (!item) return; // Avoid adding empty items
 
-    const docRef = doc(collection(firestore, 'inventory'), item.toLowerCase())
+    const normalizedItem = item.toLowerCase(); // Normalize to lowercase
+    const docRef = doc(collection(firestore, 'inventory'), normalizedItem)
     const docSnap = await getDoc(docRef)
     if (docSnap.exists()) {
       const { quantity } = docSnap.data()
@@ -57,7 +58,8 @@ export default function Home() {
   }
 
   const removeItem = async (item) => {
-    const docRef = doc(collection(firestore, 'inventory'), item.toLowerCase())
+    const normalizedItem = item.toLowerCase(); // Normalize to lowercase
+    const docRef = doc(collection(firestore, 'inventory'), normalizedItem)
     const docSnap = await getDoc(docRef)
     if (docSnap.exists()) {
       const { quantity } = docSnap.data()
