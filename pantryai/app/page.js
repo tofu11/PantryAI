@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Box, Stack, Typography, Button, Modal, TextField } from '@mui/material'
+import { Box, Stack, Typography, Button, Modal, TextField, InputBase } from '@mui/material'
 import { firestore } from '@/firebase'
 import {
   collection,
@@ -19,8 +19,8 @@ const style = {
   left: '50%',
   transform: 'translate(-50%, -50%)',
   width: 400,
-  bgcolor: 'white',
-  border: '2px solid #000',
+  bgcolor: '#1a1a2e', // Dark background color
+  border: '2px solid #38ef7d', // Light green border color
   boxShadow: 24,
   p: 4,
   display: 'flex',
@@ -32,6 +32,7 @@ export default function Home() {
   const [inventory, setInventory] = useState([])
   const [open, setOpen] = useState(false)
   const [itemName, setItemName] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
 
   const updateInventory = async () => {
     const snapshot = await getDocs(collection(firestore, 'inventory'))
@@ -79,88 +80,123 @@ export default function Home() {
     updateInventory()
   }, [])
 
+  const filteredInventory = inventory.filter(item => 
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
   return (
     <Box
       width="100vw"
       height="100vh"
+      bgcolor={'#0f0f23'} // Dark background for the whole page
       display={'flex'}
-      justifyContent={'center'}
       flexDirection={'column'}
       alignItems={'center'}
-      gap={2}
+      padding={2}
     >
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
+      <Box
+        width="100%"
+        maxWidth="1000px" // Make the green box wider
+        height="85vh" // Make the green box fill most of the screen height
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        overflow="auto"
+        flexGrow={1}
+        gap={2}
+        border={'1px solid #38ef7d'} // Light green border
       >
-        <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            Add Item
-          </Typography>
-          <Stack width="100%" direction={'row'} spacing={2}>
-            <TextField
-              id="outlined-basic"
-              label="Item"
-              variant="outlined"
-              fullWidth
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-            />
-            <Button
-              variant="outlined"
-              onClick={() => {
-                addItem(itemName)
-                setItemName('')
-                handleClose()
-              }}
-            >
-              Add
-            </Button>
+        <Button
+          variant="contained"
+          onClick={handleOpen}
+          sx={{ bgcolor: '#38ef7d', color: '#1a1a2e', alignSelf: 'flex-start', marginTop: 2 }} // Light green button with dark text
+        >
+          Add New Item
+        </Button>
+
+        <Modal
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box sx={style}>
+            <Typography id="modal-modal-title" variant="h6" component="h2" color="#ffffff"> {/* White text color */}
+              Add Item
+            </Typography>
+            <Stack width="100%" direction={'row'} spacing={2}>
+              <TextField
+                id="outlined-basic"
+                label="Item"
+                variant="outlined"
+                fullWidth
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+                sx={{ input: { color: '#ffffff' }, label: { color: '#38ef7d' }, fieldset: { borderColor: '#38ef7d' } }} // White input text and light green label
+              />
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  addItem(itemName)
+                  setItemName('')
+                  handleClose()
+                }}
+                sx={{ color: '#38ef7d', borderColor: '#38ef7d' }} // Light green button
+              >
+                Add
+              </Button>
+            </Stack>
+          </Box>
+        </Modal>
+
+        <Box width="100%" padding={2}> 
+          <InputBase
+            placeholder="Search items..."
+            fullWidth
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ bgcolor: '#1a1a2e', color: '#ffffff', padding: 1, borderRadius: 1, border: '1px solid #38ef7d' }}
+          />
+        </Box>
+
+        <Box width="100%"> 
+          <Box
+            width="100%"
+            height="100px"
+            bgcolor={'#1a1a2e'} // Dark background for header
+            display={'flex'}
+            justifyContent={'center'}
+            alignItems={'center'}
+          >
+            <Typography variant={'h2'} color={'#38ef7d'} textAlign={'center'}> {/* Light green text color */}
+              Inventory Items
+            </Typography>
+          </Box>
+          <Stack width="100%" spacing={2} overflow={'auto'} maxHeight="calc(100% - 100px)"> {/* Allow space for header */}
+            {filteredInventory.map(({ name, quantity }) => (
+              <Box
+                key={name}
+                width="100%"
+                minHeight="150px"
+                display={'flex'}
+                justifyContent={'space-between'}
+                alignItems={'center'}
+                bgcolor={'#1a1a2e'} // Dark background for items
+                paddingX={5}
+              >
+                <Typography variant={'h3'} color={'#ffffff'} textAlign={'center'}>
+                  {name.charAt(0).toUpperCase() + name.slice(1)}
+                </Typography>
+                <Typography variant={'h3'} color={'#ffffff'} textAlign={'center'}>
+                  Quantity: {quantity}
+                </Typography>
+                <Button variant="contained" onClick={() => removeItem(name)} sx={{ bgcolor: '#38ef7d', color: '#1a1a2e' }}> {/* Light green button with dark text */}
+                  Remove
+                </Button>
+              </Box>
+            ))}
           </Stack>
         </Box>
-      </Modal>
-      <Button variant="contained" onClick={handleOpen}>
-        Add New Item
-      </Button>
-      <Box border={'1px solid #333'}>
-        <Box
-          width="800px"
-          height="100px"
-          bgcolor={'#ADD8E6'}
-          display={'flex'}
-          justifyContent={'center'}
-          alignItems={'center'}
-        >
-          <Typography variant={'h2'} color={'#333'} textAlign={'center'}>
-            Inventory Items
-          </Typography>
-        </Box>
-        <Stack width="800px" spacing={2} overflow={'auto'}>
-          {inventory.map(({ name, quantity }) => (
-            <Box
-              key={name}
-              width="100%"
-              minHeight="150px"
-              display={'flex'}
-              justifyContent={'space-between'}
-              alignItems={'center'}
-              bgcolor={'#f0f0f0'}
-              paddingX={5}
-            >
-              <Typography variant={'h3'} color={'#333'} textAlign={'center'}>
-                {name.charAt(0).toUpperCase() + name.slice(1)}
-              </Typography>
-              <Typography variant={'h3'} color={'#333'} textAlign={'center'}>
-                Quantity: {quantity}
-              </Typography>
-              <Button variant="contained" onClick={() => removeItem(name)}>
-                Remove
-              </Button>
-            </Box>
-          ))}
-        </Stack>
       </Box>
     </Box>
   )
